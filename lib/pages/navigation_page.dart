@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:google_navigation_flutter/google_navigation_flutter.dart';
 import 'package:loocator/api/distance_matrix_api.dart';
 import 'package:loocator/pages/add_marker.dart';
+import 'package:loocator/pages/login_page.dart';
 import 'package:loocator/utils/utils.dart';
 import 'package:loocator/pages/in_route_screen.dart';
 import 'package:loocator/pages/info_screen.dart';
@@ -391,7 +392,7 @@ class _NavigationPageState extends State<NavigationPage> {
               ? InRouteScreen(
                   onPressed: () {
                     setState(() {
-                      cleanSlate();
+                      _cleanSlate();
                     });
                   },
                   distance: _remainingDistance,
@@ -401,7 +402,7 @@ class _NavigationPageState extends State<NavigationPage> {
     );
   }
 
-  void cleanSlate() {
+  void _cleanSlate() {
     _validRoute = false;
     _uiEnabled = false;
     _waypoints.clear();
@@ -420,7 +421,10 @@ class _NavigationPageState extends State<NavigationPage> {
 
   void _onMapLongClicked(LatLng position) {
     showModalBottomSheet(
-        context: context, builder: (context) => const AddMarker());
+        context: context,
+        builder: (context) => AddMarker(
+              position: position,
+            ));
   }
 
   void _onMarkerClicked(String marker) {
@@ -489,7 +493,7 @@ class _NavigationPageState extends State<NavigationPage> {
             child: ElevatedButton(
                 onPressed: () {
                   setState(() {
-                    cleanSlate();
+                    _cleanSlate();
                   });
                 },
                 child: const Row(
@@ -545,9 +549,10 @@ class _NavigationPageState extends State<NavigationPage> {
         // TODO: Make this the menu for login, registration, and customer service
         MenuItemButton(
           onPressed: () {
-            showMessage('This was pressed.');
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const LoginPage()));
           },
-          child: const Text('Press Me!!!'),
+          child: const Text('Log in'),
         )
       ],
       builder: (_, MenuController controller, Widget? child) {

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "533272709196",
+    "project_id": "loocator-559f9",
+    "storage_bucket": "loocator-559f9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:533272709196:android:667988c415eea9766f0ce9",
+        "android_client_info": {
+          "package_name": "com.example.loocator"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARNA7Rv_OUS9FS4z7-weKEaWOqSj0pHO0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

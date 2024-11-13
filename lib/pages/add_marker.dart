@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:loocator/widgets/star_rating.dart';
+import 'package:google_navigation_flutter/google_navigation_flutter.dart';
 
 class AddMarker extends StatefulWidget {
-  const AddMarker({super.key});
+  final LatLng position;
+
+  const AddMarker({super.key, required this.position});
 
   @override
   State<AddMarker> createState() => _AddMarkerState();
@@ -59,7 +61,7 @@ class _AddMarkerState extends State<AddMarker> {
                   ),
                   ElevatedButton(
                     onPressed: () => showMessage(
-                        'This was pressed'), // TODO: Replace this with storing the request in a firestore database
+                        '${widget.position}'), // TODO: Replace this with storing the request in a firestore database
                     style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).primaryColorLight),
                     child: const Text('Submit Request'),
