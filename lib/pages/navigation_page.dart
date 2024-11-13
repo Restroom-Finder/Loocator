@@ -2,6 +2,7 @@
 
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_navigation_flutter/google_navigation_flutter.dart';
 import 'package:loocator/api/distance_matrix_api.dart';
@@ -19,6 +20,8 @@ class NavigationPage extends StatefulWidget {
 }
 
 class _NavigationPageState extends State<NavigationPage> {
+  bool userSignedIn = false;
+
   // TODO: make marker be a list returned from a firestore database of restrooms/markers
   List<LatLng> markers = [
     const LatLng(latitude: 32.787971, longitude: -79.936245), // Camden Garage
@@ -347,6 +350,7 @@ class _NavigationPageState extends State<NavigationPage> {
 
   @override
   Widget build(BuildContext context) {
+    userSignedIn = (FirebaseAuth.instance.currentUser != null);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Loocator'),
@@ -552,7 +556,27 @@ class _NavigationPageState extends State<NavigationPage> {
             Navigator.push(context,
                 MaterialPageRoute(builder: (context) => const LoginPage()));
           },
-          child: const Text('Log in'),
+          child: userSignedIn
+              ? const Row(
+                  children: [
+                    Icon(Icons.person),
+                    SizedBox(
+                      width: 5,
+                    ),
+                    Text(
+                      'Profile',
+                    ),
+                  ],
+                )
+              : const Row(
+                  children: [
+                    Icon(Icons.login),
+                    SizedBox(
+                      width: 5,
+                    ),
+                    Text('Log In'),
+                  ],
+                ),
         )
       ],
       builder: (_, MenuController controller, Widget? child) {
