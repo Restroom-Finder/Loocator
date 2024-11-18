@@ -13,7 +13,7 @@ void main() async {
   FirebaseUIAuth.configureProviders(
       [EmailAuthProvider(), GoogleProvider(clientId: GOOGLE_CLIENT_ID)]);
 
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide EmailAuthProvider;
 import 'package:firebase_ui_auth/firebase_ui_auth.dart';
-import 'package:firebase_ui_oauth_google/firebase_ui_oauth_google.dart';
-import 'package:loocator/constants.dart';
 import 'package:loocator/pages/profile_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -20,15 +18,21 @@ class _LoginPageState extends State<LoginPage> {
         : Scaffold(
             appBar: AppBar(
               title: const Text('Loocator'),
+              backgroundColor: Theme.of(context).primaryColorLight,
             ),
             body: SignInScreen(
               actions: [
                 AuthStateChangeAction<SignedIn>((context, state) {
                   Navigator.pop(context);
                   showMessage("Signed In.");
-                  // Defauly display name is the first section of the user's email
+                }),
+                AuthStateChangeAction<UserCreated>((context, state) {
+                  // Default display name is the first section of the user's email
                   FirebaseAuth.instance.currentUser!.updateDisplayName(
                       FirebaseAuth.instance.currentUser!.email!.split('@')[0]);
+                  FirebaseAuth.instance.currentUser!.sendEmailVerification();
+                  Navigator.pop(context);
+                  showMessage('A verification email has been sent.');
                 }),
               ],
             ),

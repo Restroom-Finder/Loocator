@@ -12,20 +12,14 @@ Future<List<Restroom>> buildRestrooms() async {
   List<Restroom> restrooms = [];
 
   for (QueryDocumentSnapshot doc in dataList) {
-    try {
-      restrooms.add(Restroom(
-          position: LatLng(
-              latitude: doc.get('latitude'), longitude: doc.get('longitude')),
-          placeName: doc.get('place name'),
-          address: doc.get('address'),
-          reviews: (await _convertToList(doc, 'reviews'))!.cast()));
-    } on Exception {
-      restrooms.add(Restroom(
-          position: LatLng(
-              latitude: doc.get('latitude'), longitude: doc.get('longitude')),
-          placeName: doc.get('place name'),
-          address: doc.get('address')));
-    }
+    restrooms.add(Restroom(
+        position: LatLng(
+            latitude: doc.get('latitude'), longitude: doc.get('longitude')),
+        placeName: doc.get('place name'),
+        address: doc.get('address'),
+        reviews: ((await _convertToList(doc, 'reviews')) == null)
+            ? null
+            : (await _convertToList(doc, 'reviews'))!.cast()));
   }
 
   return restrooms;
@@ -54,11 +48,15 @@ Future<List<dynamic>?> _convertToList(
   final docs = rawData.docs;
   List<dynamic>? data = [];
 
-  for (QueryDocumentSnapshot doc in docs) {
-    if (doc.get(path) != null) data.add(doc.get(path));
-  }
+  try {
+    for (QueryDocumentSnapshot doc in docs) {
+      if (doc.get(path) != null) data.add(doc.get(path));
+    }
 
-  return data.isEmpty ? null : data;
+    return data.isEmpty ? null : data;
+  } on StateError {
+    return null;
+  }
 }
 
 void addReview(

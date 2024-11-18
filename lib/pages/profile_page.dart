@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:loocator/pages/navigation_page.dart';
 import 'package:loocator/utils/firebase_ui_auth.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -25,8 +26,11 @@ class _ProfilePageState extends State<ProfilePage> {
         actions: [
           TextButton.icon(
             onPressed: () {
-              Navigator.pop(context);
               FirebaseUIAuth.signOut(context: context);
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const NavigationPage()));
               showMessage('Logged Out');
             },
             label: const Text('Log Out'),
