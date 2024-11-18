@@ -6,8 +6,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_navigation_flutter/google_navigation_flutter.dart';
 import 'package:loocator/api/distance_matrix_api.dart';
+import 'package:loocator/models/restroom.dart';
 import 'package:loocator/pages/add_marker.dart';
 import 'package:loocator/pages/login_page.dart';
+import 'package:loocator/utils/firestore.dart';
 import 'package:loocator/utils/utils.dart';
 import 'package:loocator/pages/in_route_screen.dart';
 import 'package:loocator/pages/info_screen.dart';
@@ -21,6 +23,8 @@ class NavigationPage extends StatefulWidget {
 
 class _NavigationPageState extends State<NavigationPage> {
   bool userSignedIn = false;
+
+  List<Restroom> restrooms = [];
 
   // TODO: make marker be a list returned from a firestore database of restrooms/markers
   List<LatLng> markers = [
@@ -99,6 +103,7 @@ class _NavigationPageState extends State<NavigationPage> {
       debugPrint('Initializing new navigation session...');
       await GoogleMapsNavigator.initializeNavigationSession();
       await _setupListeners();
+      restrooms = await buildRestrooms();
       await _updateNavigatorInitializationState();
       unawaited(_setDefaultUserLocationAfterDelay());
       debugPrint('Navigator has been initialized: $_navigatorInitialized');
@@ -203,12 +208,9 @@ class _NavigationPageState extends State<NavigationPage> {
 
   ///Places predetermined markers in map when the map is creates
   Future<void> _placeMarkers() async {
-    for (LatLng marker in markers) {
-      await _navigationViewController!.addMarkers(<MarkerOptions>[
-        MarkerOptions(
-            position:
-                LatLng(latitude: marker.latitude, longitude: marker.longitude))
-      ]);
+    for (Restroom marker in restrooms) {
+      await _navigationViewController!.addMarkers(
+          <MarkerOptions>[MarkerOptions(position: marker.position)]);
     }
   }
 
@@ -442,8 +444,7 @@ class _NavigationPageState extends State<NavigationPage> {
         },
         distance: _remainingDistance,
         time: _remaingingTime,
-        reviews: reviews,
-        ratings: ratings,
+        restroom: restrooms[int.parse(marker.split('_')[1])],
       ),
     );
   }
@@ -577,6 +578,10 @@ class _NavigationPageState extends State<NavigationPage> {
                     Text('Log In'),
                   ],
                 ),
+        ),
+        MenuItemButton(
+          onPressed: () async => debugPrint('${await buildRestrooms()}'),
+          child: const Text('data'),
         )
       ],
       builder: (_, MenuController controller, Widget? child) {

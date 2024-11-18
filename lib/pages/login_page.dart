@@ -25,7 +25,7 @@ class _LoginPageState extends State<LoginPage> {
               actions: [
                 AuthStateChangeAction<SignedIn>((context, state) {
                   Navigator.pop(context);
-                  showMessage("${FirebaseAuth.instance.currentUser}");
+                  showMessage("Signed In.");
                   // Defauly display name is the first section of the user's email
                   FirebaseAuth.instance.currentUser!.updateDisplayName(
                       FirebaseAuth.instance.currentUser!.email!.split('@')[0]);
