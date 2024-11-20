@@ -99,7 +99,6 @@ class _ReviewPageState extends State<ReviewPage> {
                                             ? description.text
                                             : null,
                                         newRating);
-                                    updateRestrooms(widget.restroom);
                                     Navigator.pop(context);
                                     showMessage('Thank you for Reviewing!');
                                   });

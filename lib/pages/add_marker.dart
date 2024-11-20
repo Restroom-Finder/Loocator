@@ -19,7 +19,7 @@ class _AddMarkerState extends State<AddMarker> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).primaryColorLight,
-        title: const Text('Add a Marker Here?'),
+        title: const Text('Add a Restroom Here?'),
       ),
       body: Center(
         child: Padding(
@@ -60,8 +60,10 @@ class _AddMarkerState extends State<AddMarker> {
                     height: 15,
                   ),
                   ElevatedButton(
-                    onPressed: () => showMessage(
-                        '${widget.position}'), // TODO: Replace this with storing the request in a firestore database
+                    onPressed: () {
+                      Navigator.pop(context);
+                      showMessage('Submitted Request');
+                    }, // TODO: Replace this with storing the request in a firestore database
                     style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).primaryColorLight),
                     child: const Text('Submit Request'),

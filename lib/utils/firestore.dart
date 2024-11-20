@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_navigation_flutter/google_navigation_flutter.dart';
 import 'package:loocator/models/restroom.dart';
+import 'package:loocator/models/review.dart';
 
 final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -17,15 +18,18 @@ Future<List<Restroom>> buildRestrooms() async {
             latitude: doc.get('latitude'), longitude: doc.get('longitude')),
         placeName: doc.get('place name'),
         address: doc.get('address'),
-        reviews: ((await _convertToList(doc, 'reviews')) == null)
+        reviews: ((await _convertToList(doc, 'review')) == null)
             ? null
-            : (await _convertToList(doc, 'reviews'))!.cast()));
+            : (await _convertToList(doc, 'review'))!.cast(),
+        ratings: ((await _convertToList(doc, 'rating')) == null)
+            ? null
+            : (await _convertToList(doc, 'rating'))!.cast()));
   }
 
   return restrooms;
 }
 
-Future<void> updateRestrooms(Restroom restroom) async {
+Future<Restroom> updateRestroom(Restroom restroom) async {
   final rawData = await _firestore
       .collection('restrooms')
       .where('place name', isEqualTo: restroom.placeName)
@@ -37,9 +41,11 @@ Future<void> updateRestrooms(Restroom restroom) async {
     position: LatLng(latitude: data['latitude'], longitude: data['longitude']),
     placeName: data['place name'],
     address: data['address'],
-    reviews: await _convertToList(reference, 'review') as List<String>?,
-    ratings: (await _convertToList(reference, 'rating'))!.cast<double>(),
+    reviews: (await _convertToList(reference, 'review'))!.cast(),
+    ratings: (await _convertToList(reference, 'rating'))!.cast(),
   );
+
+  return restroom;
 }
 
 Future<List<dynamic>?> _convertToList(
@@ -50,7 +56,17 @@ Future<List<dynamic>?> _convertToList(
 
   try {
     for (QueryDocumentSnapshot doc in docs) {
-      if (doc.get(path) != null) data.add(doc.get(path));
+      if (doc.get(path) != null) {
+        if (path == 'rating') {
+          data.add(doc.get(path));
+        } else if (path == 'review') {
+          data.add(Review(
+              displayName: doc.get('display name'),
+              review: doc.get('review'),
+              rating: doc.get('rating'),
+              timestamp: doc.get('timestamp')));
+        }
+      }
     }
 
     return data.isEmpty ? null : data;

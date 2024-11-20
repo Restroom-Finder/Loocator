@@ -25,26 +25,7 @@ class _NavigationPageState extends State<NavigationPage> {
   bool userSignedIn = false;
 
   List<Restroom> restrooms = [];
-
-  // TODO: make marker be a list returned from a firestore database of restrooms/markers
-  List<LatLng> markers = [
-    const LatLng(latitude: 32.787971, longitude: -79.936245), // Camden Garage
-    const LatLng(latitude: 32.787118, longitude: -79.936853), // Hotel Bennett
-    const LatLng(
-        latitude: 32.786573, longitude: -79.936916), // Marion Square Garage
-    const LatLng(
-        latitude: 32.785975, longitude: -79.936825), // Francis Marion Hotel
-  ];
-
-  // TODO: make this a list returned from a firestore database of reviews from a specific restrooms
-  List<String> reviews = [
-    'I love this bathroom!',
-    'I really love this bathroom!',
-    'I hate this bathroom!',
-  ];
-
-  // TODO: make this a list returned from a firestore database of ratings from a specific restroom
-  List<double>? ratings = [2.0, 3.0, 4.0];
+  List<LatLng> markers = [];
 
   List<NavigationWaypoint> _waypoints = <NavigationWaypoint>[];
 
@@ -104,6 +85,7 @@ class _NavigationPageState extends State<NavigationPage> {
       await GoogleMapsNavigator.initializeNavigationSession();
       await _setupListeners();
       restrooms = await buildRestrooms();
+      _buildMarkers();
       await _updateNavigatorInitializationState();
       unawaited(_setDefaultUserLocationAfterDelay());
       debugPrint('Navigator has been initialized: $_navigatorInitialized');
@@ -433,7 +415,10 @@ class _NavigationPageState extends State<NavigationPage> {
             ));
   }
 
-  void _onMarkerClicked(String marker) {
+  void _onMarkerClicked(String marker) async {
+    Restroom markedRestroom =
+        await updateRestroom(restrooms[int.parse(marker.split('_')[1])]);
+
     showModalBottomSheet(
       context: context,
       builder: (context) => InfoScreen(
@@ -444,7 +429,7 @@ class _NavigationPageState extends State<NavigationPage> {
         },
         distance: _remainingDistance,
         time: _remaingingTime,
-        restroom: restrooms[int.parse(marker.split('_')[1])],
+        restroom: markedRestroom,
       ),
     );
   }
@@ -579,10 +564,6 @@ class _NavigationPageState extends State<NavigationPage> {
                   ],
                 ),
         ),
-        MenuItemButton(
-          onPressed: () async => debugPrint('${await buildRestrooms()}'),
-          child: const Text('data'),
-        )
       ],
       builder: (_, MenuController controller, Widget? child) {
         return IconButton(
@@ -597,5 +578,13 @@ class _NavigationPageState extends State<NavigationPage> {
         );
       },
     );
+  }
+
+  void _buildMarkers() {
+    for (Restroom room in restrooms) {
+      markers.add(LatLng(
+          latitude: room.position.latitude,
+          longitude: room.position.longitude));
+    }
   }
 }

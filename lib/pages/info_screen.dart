@@ -31,6 +31,8 @@ class _InfoScreenState extends State<InfoScreen> {
     bool hasReviews = (widget.restroom.reviews != null);
     bool hasRatings = (widget.restroom.ratings != null);
 
+    _setAverage();
+
     return Scaffold(
         appBar: AppBar(
           title: // Place's Name
@@ -72,15 +74,15 @@ class _InfoScreenState extends State<InfoScreen> {
                         children: [
                           // TODO: Replace the widgets with [List.generate()] and generate
                           // a list of _imageContainers()
-                          _imageContainer(),
+                          _imageContainer('toilet'),
                           const SizedBox(
                             width: 20,
                           ),
-                          _imageContainer(),
+                          _imageContainer('urinals'),
                           const SizedBox(
                             width: 20,
                           ),
-                          _imageContainer(),
+                          _imageContainer('sink'),
                         ],
                       ),
                     ),
@@ -95,7 +97,7 @@ class _InfoScreenState extends State<InfoScreen> {
                             ? Row(
                                 children: [
                                   // Ratings
-                                  _ratingStarsWidget(),
+                                  _ratingStarsWidget(avgRating!, 25),
                                   const SizedBox(
                                     width: 5,
                                   ),
@@ -178,37 +180,42 @@ class _InfoScreenState extends State<InfoScreen> {
             ])));
   }
 
-  Widget _imageContainer() {
-    return Container(
+  Widget _imageContainer(String picture) {
+    return SizedBox(
       height: 200,
       width: 200,
-      color: Colors.red,
+      child: Image(
+        image: AssetImage('assets/images/$picture.jpg'),
+        width: 200,
+        height: 200,
+      ),
     );
   }
 
-  Widget _ratingStarsWidget() {
+  Widget _ratingStarsWidget(double rating, double size) {
     return Row(
-      children: List.generate(5, (index) => _buildStar(index)),
+      children: List.generate(5, (index) => _buildStar(index, rating, size)),
     );
   }
 
-  Widget _buildStar(int index) {
-    _setAverage();
-
-    if (index >= avgRating!) {
-      return const Icon(
+  Widget _buildStar(int index, double rating, double size) {
+    if (index >= rating) {
+      return Icon(
         Icons.star_border,
         color: Colors.amber,
+        size: size,
       );
-    } else if (index > avgRating! - 1 && index < avgRating!) {
-      return const Icon(
+    } else if (index > rating - 1 && index < rating) {
+      return Icon(
         Icons.star_half,
         color: Colors.amber,
+        size: size,
       );
     } else {
-      return const Icon(
+      return Icon(
         Icons.star,
         color: Colors.amber,
+        size: size,
       );
     }
   }
@@ -222,10 +229,43 @@ class _InfoScreenState extends State<InfoScreen> {
   }
 
   Widget _buildReviewList(int index) {
-    return Text(
-      widget.restroom.reviews![index],
-      textAlign: TextAlign.start,
-      style: const TextStyle(fontSize: 12),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _ratingStarsWidget(widget.restroom.reviews![index].rating, 15),
+            const SizedBox(
+              width: 5,
+            ),
+            Text(
+              widget.restroom.reviews![index].timestamp
+                  .toDate()
+                  .toString()
+                  .substring(
+                      0,
+                      widget.restroom.reviews![index].timestamp
+                              .toDate()
+                              .toString()
+                              .length -
+                          10),
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            Text(
+              '${widget.restroom.reviews![index].displayName}: ',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              '"${widget.restroom.reviews![index].review}"',
+              style: const TextStyle(fontSize: 16),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -236,8 +276,10 @@ class _InfoScreenState extends State<InfoScreen> {
 
   void _setAverage() {
     setState(() {
-      avgRating =
-          double.parse(_average(widget.restroom.ratings!).toStringAsFixed(1));
+      if (widget.restroom.ratings != null) {
+        avgRating =
+            double.parse(_average(widget.restroom.ratings!).toStringAsFixed(1));
+      }
     });
   }
 

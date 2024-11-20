@@ -1,10 +1,11 @@
 import 'package:google_navigation_flutter/google_navigation_flutter.dart';
+import 'package:loocator/models/review.dart';
 
 class Restroom {
   final LatLng position;
   final String placeName;
   final String address;
-  List<String>? reviews;
+  List<Review>? reviews;
   List<double>? ratings;
   bool isAccessible;
 
