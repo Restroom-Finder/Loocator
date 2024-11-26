@@ -408,11 +408,15 @@ class _NavigationPageState extends State<NavigationPage> {
   }
 
   void _onMapLongClicked(LatLng position) {
-    showModalBottomSheet(
-        context: context,
-        builder: (context) => AddMarker(
-              position: position,
-            ));
+    if (FirebaseAuth.instance.currentUser != null) {
+      showModalBottomSheet(
+          context: context,
+          builder: (context) => AddMarker(
+                position: position,
+              ));
+    } else {
+      showMessage('You have to be signed in to add a request.');
+    }
   }
 
   void _onMarkerClicked(String marker) async {

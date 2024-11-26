@@ -1,5 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_navigation_flutter/google_navigation_flutter.dart';
+import 'package:loocator/utils/firestore.dart';
 
 class AddMarker extends StatefulWidget {
   final LatLng position;
@@ -62,6 +64,8 @@ class _AddMarkerState extends State<AddMarker> {
                   ElevatedButton(
                     onPressed: () {
                       Navigator.pop(context);
+                      addRequest(placeName.text, address.text,
+                          FirebaseAuth.instance.currentUser!);
                       showMessage('Submitted Request');
                     }, // TODO: Replace this with storing the request in a firestore database
                     style: ElevatedButton.styleFrom(

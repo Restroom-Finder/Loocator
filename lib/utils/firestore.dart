@@ -41,8 +41,12 @@ Future<Restroom> updateRestroom(Restroom restroom) async {
     position: LatLng(latitude: data['latitude'], longitude: data['longitude']),
     placeName: data['place name'],
     address: data['address'],
-    reviews: (await _convertToList(reference, 'review'))!.cast(),
-    ratings: (await _convertToList(reference, 'rating'))!.cast(),
+    reviews: ((await _convertToList(reference, 'review')) == null)
+        ? null
+        : (await _convertToList(reference, 'review'))!.cast(),
+    ratings: ((await _convertToList(reference, 'rating')) == null)
+        ? null
+        : (await _convertToList(reference, 'rating'))!.cast(),
   );
 
   return restroom;
@@ -87,5 +91,12 @@ void addReview(
     'review': review,
     'rating': rating,
     'timestamp': Timestamp.now(),
+  });
+}
+
+void addRequest(String placeName, String address, User currentUser) async {
+  await _firestore.collection('requests').doc(currentUser.uid).set({
+    'place name': placeName,
+    'address': address,
   });
 }
