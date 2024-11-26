@@ -2,10 +2,14 @@
 
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_navigation_flutter/google_navigation_flutter.dart';
 import 'package:loocator/api/distance_matrix_api.dart';
+import 'package:loocator/models/restroom.dart';
 import 'package:loocator/pages/add_marker.dart';
+import 'package:loocator/pages/login_page.dart';
+import 'package:loocator/utils/firestore.dart';
 import 'package:loocator/utils/utils.dart';
 import 'package:loocator/pages/in_route_screen.dart';
 import 'package:loocator/pages/info_screen.dart';
@@ -18,25 +22,10 @@ class NavigationPage extends StatefulWidget {
 }
 
 class _NavigationPageState extends State<NavigationPage> {
-  // TODO: make marker be a list returned from a firestore database of restrooms/markers
-  List<LatLng> markers = [
-    const LatLng(latitude: 32.787971, longitude: -79.936245), // Camden Garage
-    const LatLng(latitude: 32.787118, longitude: -79.936853), // Hotel Bennett
-    const LatLng(
-        latitude: 32.786573, longitude: -79.936916), // Marion Square Garage
-    const LatLng(
-        latitude: 32.785975, longitude: -79.936825), // Francis Marion Hotel
-  ];
+  bool userSignedIn = false;
 
-  // TODO: make this a list returned from a firestore database of reviews from a specific restrooms
-  List<String> reviews = [
-    'I love this bathroom!',
-    'I really love this bathroom!',
-    'I hate this bathroom!',
-  ];
-
-  // TODO: make this a list returned from a firestore database of ratings from a specific restroom
-  List<double>? ratings = [2.0, 3.0, 4.0];
+  List<Restroom> restrooms = [];
+  List<LatLng> markers = [];
 
   List<NavigationWaypoint> _waypoints = <NavigationWaypoint>[];
 
@@ -95,6 +84,8 @@ class _NavigationPageState extends State<NavigationPage> {
       debugPrint('Initializing new navigation session...');
       await GoogleMapsNavigator.initializeNavigationSession();
       await _setupListeners();
+      restrooms = await buildRestrooms();
+      _buildMarkers();
       await _updateNavigatorInitializationState();
       unawaited(_setDefaultUserLocationAfterDelay());
       debugPrint('Navigator has been initialized: $_navigatorInitialized');
@@ -199,12 +190,9 @@ class _NavigationPageState extends State<NavigationPage> {
 
   ///Places predetermined markers in map when the map is creates
   Future<void> _placeMarkers() async {
-    for (LatLng marker in markers) {
-      await _navigationViewController!.addMarkers(<MarkerOptions>[
-        MarkerOptions(
-            position:
-                LatLng(latitude: marker.latitude, longitude: marker.longitude))
-      ]);
+    for (Restroom marker in restrooms) {
+      await _navigationViewController!.addMarkers(
+          <MarkerOptions>[MarkerOptions(position: marker.position)]);
     }
   }
 
@@ -346,6 +334,7 @@ class _NavigationPageState extends State<NavigationPage> {
 
   @override
   Widget build(BuildContext context) {
+    userSignedIn = (FirebaseAuth.instance.currentUser != null);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Loocator'),
@@ -391,7 +380,7 @@ class _NavigationPageState extends State<NavigationPage> {
               ? InRouteScreen(
                   onPressed: () {
                     setState(() {
-                      cleanSlate();
+                      _cleanSlate();
                     });
                   },
                   distance: _remainingDistance,
@@ -401,7 +390,7 @@ class _NavigationPageState extends State<NavigationPage> {
     );
   }
 
-  void cleanSlate() {
+  void _cleanSlate() {
     _validRoute = false;
     _uiEnabled = false;
     _waypoints.clear();
@@ -419,11 +408,21 @@ class _NavigationPageState extends State<NavigationPage> {
   }
 
   void _onMapLongClicked(LatLng position) {
-    showModalBottomSheet(
-        context: context, builder: (context) => const AddMarker());
+    if (FirebaseAuth.instance.currentUser != null) {
+      showModalBottomSheet(
+          context: context,
+          builder: (context) => AddMarker(
+                position: position,
+              ));
+    } else {
+      showMessage('You have to be signed in to add a request.');
+    }
   }
 
-  void _onMarkerClicked(String marker) {
+  void _onMarkerClicked(String marker) async {
+    Restroom markedRestroom =
+        await updateRestroom(restrooms[int.parse(marker.split('_')[1])]);
+
     showModalBottomSheet(
       context: context,
       builder: (context) => InfoScreen(
@@ -434,8 +433,7 @@ class _NavigationPageState extends State<NavigationPage> {
         },
         distance: _remainingDistance,
         time: _remaingingTime,
-        reviews: reviews,
-        ratings: ratings,
+        restroom: markedRestroom,
       ),
     );
   }
@@ -489,7 +487,7 @@ class _NavigationPageState extends State<NavigationPage> {
             child: ElevatedButton(
                 onPressed: () {
                   setState(() {
-                    cleanSlate();
+                    _cleanSlate();
                   });
                 },
                 child: const Row(
@@ -545,10 +543,31 @@ class _NavigationPageState extends State<NavigationPage> {
         // TODO: Make this the menu for login, registration, and customer service
         MenuItemButton(
           onPressed: () {
-            showMessage('This was pressed.');
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const LoginPage()));
           },
-          child: const Text('Press Me!!!'),
-        )
+          child: userSignedIn
+              ? const Row(
+                  children: [
+                    Icon(Icons.person),
+                    SizedBox(
+                      width: 5,
+                    ),
+                    Text(
+                      'Profile',
+                    ),
+                  ],
+                )
+              : const Row(
+                  children: [
+                    Icon(Icons.login),
+                    SizedBox(
+                      width: 5,
+                    ),
+                    Text('Log In'),
+                  ],
+                ),
+        ),
       ],
       builder: (_, MenuController controller, Widget? child) {
         return IconButton(
@@ -563,5 +582,13 @@ class _NavigationPageState extends State<NavigationPage> {
         );
       },
     );
+  }
+
+  void _buildMarkers() {
+    for (Restroom room in restrooms) {
+      markers.add(LatLng(
+          latitude: room.position.latitude,
+          longitude: room.position.longitude));
+    }
   }
 }

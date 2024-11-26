@@ -1,8 +1,12 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:loocator/widgets/star_rating.dart';
+import 'package:google_navigation_flutter/google_navigation_flutter.dart';
+import 'package:loocator/utils/firestore.dart';
 
 class AddMarker extends StatefulWidget {
-  const AddMarker({super.key});
+  final LatLng position;
+
+  const AddMarker({super.key, required this.position});
 
   @override
   State<AddMarker> createState() => _AddMarkerState();
@@ -17,7 +21,7 @@ class _AddMarkerState extends State<AddMarker> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).primaryColorLight,
-        title: const Text('Add a Marker Here?'),
+        title: const Text('Add a Restroom Here?'),
       ),
       body: Center(
         child: Padding(
@@ -58,8 +62,12 @@ class _AddMarkerState extends State<AddMarker> {
                     height: 15,
                   ),
                   ElevatedButton(
-                    onPressed: () => showMessage(
-                        'This was pressed'), // TODO: Replace this with storing the request in a firestore database
+                    onPressed: () {
+                      Navigator.pop(context);
+                      addRequest(placeName.text, address.text,
+                          FirebaseAuth.instance.currentUser!);
+                      showMessage('Submitted Request');
+                    }, // TODO: Replace this with storing the request in a firestore database
                     style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).primaryColorLight),
                     child: const Text('Submit Request'),

@@ -1,7 +1,20 @@
+import 'package:loocator/utils/firebase_ui_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:loocator/constants.dart';
 import 'package:loocator/pages/navigation_page.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
-void main() => runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  FirebaseUIAuth.configureProviders(
+      [EmailAuthProvider(), GoogleProvider(clientId: GOOGLE_CLIENT_ID)]);
+
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

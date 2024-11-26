@@ -1,20 +1,21 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:loocator/models/restroom.dart';
 import 'package:loocator/pages/review_page.dart';
 
+// ignore: must_be_immutable
 class InfoScreen extends StatefulWidget {
   final void Function()? onPressed;
   final int distance;
   final int time;
-  List<String> reviews;
-  List<double>? ratings;
+  Restroom restroom;
 
   InfoScreen({
     super.key,
     required this.onPressed,
     required this.distance,
     required this.time,
-    required this.reviews,
-    required this.ratings,
+    required this.restroom,
   });
 
   @override
@@ -23,17 +24,21 @@ class InfoScreen extends StatefulWidget {
 
 class _InfoScreenState extends State<InfoScreen> {
   double? avgRating;
-  int ratingAmount = 0;
-  bool isAccesible = true;
 
   @override
   Widget build(BuildContext context) {
+    bool signedIn = (FirebaseAuth.instance.currentUser != null);
+    bool hasReviews = (widget.restroom.reviews != null);
+    bool hasRatings = (widget.restroom.ratings != null);
+
+    _setAverage();
+
     return Scaffold(
         appBar: AppBar(
           title: // Place's Name
-              const Text(
-            'Place Name',
-            style: TextStyle(
+              Text(
+            widget.restroom.placeName,
+            style: const TextStyle(
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -49,12 +54,16 @@ class _InfoScreenState extends State<InfoScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // Address
-                    const Text(
-                      'Address',
+                    Text(
+                      widget.restroom.address,
                       textAlign: TextAlign.start,
-                      style: TextStyle(
-                        fontSize: 12,
+                      style: const TextStyle(
+                        fontSize: 14,
                       ),
+                    ),
+
+                    const SizedBox(
+                      height: 5,
                     ),
 
                     // Review Images
@@ -65,15 +74,15 @@ class _InfoScreenState extends State<InfoScreen> {
                         children: [
                           // TODO: Replace the widgets with [List.generate()] and generate
                           // a list of _imageContainers()
-                          _imageContainer(),
+                          _imageContainer('toilet'),
                           const SizedBox(
                             width: 20,
                           ),
-                          _imageContainer(),
+                          _imageContainer('urinals'),
                           const SizedBox(
                             width: 20,
                           ),
-                          _imageContainer(),
+                          _imageContainer('sink'),
                         ],
                       ),
                     ),
@@ -84,27 +93,30 @@ class _InfoScreenState extends State<InfoScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            // Ratings
-                            _ratingStarsWidget(),
-                            const SizedBox(
-                              width: 5,
-                            ),
-                            _displayAverageRatings(),
-                            const SizedBox(
-                              width: 5,
-                            ),
-                            // Accessibilty Icon
-                            isAccesible
-                                ? const Icon(
-                                    Icons.accessible_forward,
-                                    size: 20,
-                                  )
-                                : const SizedBox(),
-                          ],
-                        ),
-                        // Distance
+                        hasRatings
+                            ? Row(
+                                children: [
+                                  // Ratings
+                                  _ratingStarsWidget(avgRating!, 25),
+                                  const SizedBox(
+                                    width: 5,
+                                  ),
+                                  _displayAverageRatings(),
+                                  const SizedBox(
+                                    width: 5,
+                                  ),
+                                  // Accessibilty Icon
+                                  widget.restroom.isAccessible
+                                      ? const Icon(
+                                          Icons.accessible_forward,
+                                          size: 20,
+                                        )
+                                      : const SizedBox(),
+                                ],
+                              )
+                            : const Text(
+                                'There are no ratings for this restroom yet.'),
+                        // Distance and Time
                         Text(
                           '${widget.distance} mi, ${widget.time} min',
                           textAlign: TextAlign.end,
@@ -128,19 +140,29 @@ class _InfoScreenState extends State<InfoScreen> {
                         ),
                         IconButton(
                             onPressed: () {
-                              showModalBottomSheet(
-                                context: context,
-                                builder: (context) => ReviewPage(
-                                  reviews: widget.reviews,
-                                  ratings: widget.ratings!,
-                                  avgRating: avgRating!,
-                                ),
-                              );
+                              if (signedIn) {
+                                showModalBottomSheet(
+                                  context: context,
+                                  builder: (context) => ReviewPage(
+                                    restroom: widget.restroom,
+                                  ),
+                                );
+                              } else {
+                                showMessage(
+                                    'You have to be signed in to leave a review.');
+                              }
                             },
                             icon: const Icon(Icons.add)),
                       ],
                     ),
-                    _reviewListWidget(),
+
+                    hasReviews
+                        ? _reviewListWidget()
+                        : const Text(
+                            'There are no reviews for this restroom yet.',
+                            textAlign: TextAlign.center,
+                          ),
+
                     const SizedBox(
                       height: 15,
                     ),
@@ -158,37 +180,42 @@ class _InfoScreenState extends State<InfoScreen> {
             ])));
   }
 
-  Widget _imageContainer() {
-    return Container(
+  Widget _imageContainer(String picture) {
+    return SizedBox(
       height: 200,
       width: 200,
-      color: Colors.red,
+      child: Image(
+        image: AssetImage('assets/images/$picture.jpg'),
+        width: 200,
+        height: 200,
+      ),
     );
   }
 
-  Widget _ratingStarsWidget() {
+  Widget _ratingStarsWidget(double rating, double size) {
     return Row(
-      children: List.generate(5, (index) => _buildStar(index)),
+      children: List.generate(5, (index) => _buildStar(index, rating, size)),
     );
   }
 
-  Widget _buildStar(int index) {
-    _setAverage();
-
-    if (index >= avgRating!) {
-      return const Icon(
+  Widget _buildStar(int index, double rating, double size) {
+    if (index >= rating) {
+      return Icon(
         Icons.star_border,
         color: Colors.amber,
+        size: size,
       );
-    } else if (index > avgRating! - 1 && index < avgRating!) {
-      return const Icon(
+    } else if (index > rating - 1 && index < rating) {
+      return Icon(
         Icons.star_half,
         color: Colors.amber,
+        size: size,
       );
     } else {
-      return const Icon(
+      return Icon(
         Icons.star,
         color: Colors.amber,
+        size: size,
       );
     }
   }
@@ -197,27 +224,62 @@ class _InfoScreenState extends State<InfoScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: List.generate(
-          widget.reviews.length, (index) => _buildReviewList(index)),
+          widget.restroom.reviews!.length, (index) => _buildReviewList(index)),
     );
   }
 
   Widget _buildReviewList(int index) {
-    return Text(
-      widget.reviews[index],
-      textAlign: TextAlign.start,
-      style: const TextStyle(fontSize: 12),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _ratingStarsWidget(widget.restroom.reviews![index].rating, 15),
+            const SizedBox(
+              width: 5,
+            ),
+            Text(
+              widget.restroom.reviews![index].timestamp
+                  .toDate()
+                  .toString()
+                  .substring(
+                      0,
+                      widget.restroom.reviews![index].timestamp
+                              .toDate()
+                              .toString()
+                              .length -
+                          10),
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            Text(
+              '${widget.restroom.reviews![index].displayName}: ',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              '"${widget.restroom.reviews![index].review}"',
+              style: const TextStyle(fontSize: 16),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
   Widget _displayAverageRatings() {
     _setAverage();
-    return Text('$avgRating/5 ($ratingAmount)');
+    return Text('$avgRating/5 (${widget.restroom.ratings!.length})');
   }
 
   void _setAverage() {
     setState(() {
-      avgRating = double.parse(_average(widget.ratings!).toStringAsFixed(1));
-      ratingAmount = widget.ratings!.length;
+      if (widget.restroom.ratings != null) {
+        avgRating =
+            double.parse(_average(widget.restroom.ratings!).toStringAsFixed(1));
+      }
     });
   }
 

@@ -1,17 +1,17 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:loocator/models/restroom.dart';
+import 'package:loocator/utils/firestore.dart';
 import 'package:loocator/widgets/star_rating.dart';
 
 // ignore: must_be_immutable
 class ReviewPage extends StatefulWidget {
-  List<String> reviews;
-  List<double> ratings;
-  double avgRating;
+  final Restroom restroom;
 
-  ReviewPage(
-      {super.key,
-      required this.reviews,
-      required this.ratings,
-      required this.avgRating});
+  ReviewPage({
+    super.key,
+    required this.restroom,
+  });
 
   @override
   State<ReviewPage> createState() => _ReviewPageState();
@@ -24,6 +24,7 @@ class _ReviewPageState extends State<ReviewPage> {
 
   @override
   Widget build(BuildContext context) {
+    User? currentUser = FirebaseAuth.instance.currentUser;
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -91,10 +92,13 @@ class _ReviewPageState extends State<ReviewPage> {
                           onPressed: (updatedRating)
                               ? () {
                                   setState(() {
-                                    if (description.text.isNotEmpty) {
-                                      widget.reviews.add(description.text);
-                                    }
-                                    widget.ratings.add(newRating);
+                                    addReview(
+                                        widget.restroom,
+                                        currentUser!,
+                                        (description.text.isNotEmpty)
+                                            ? description.text
+                                            : null,
+                                        newRating);
                                     Navigator.pop(context);
                                     showMessage('Thank you for Reviewing!');
                                   });
